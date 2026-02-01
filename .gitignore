@@ -20,6 +20,7 @@ ENV/
 
 # Logs
 *.log
+*.log.old
 forwarder.log
 
 # Temporary files

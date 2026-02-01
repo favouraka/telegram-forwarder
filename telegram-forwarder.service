@@ -10,17 +10,12 @@ Environment="PATH=/home/aka/telegram-forwarder-py/venv/bin:/usr/bin:/bin"
 Environment="PYTHONPATH=/home/aka/telegram-forwarder-py/venv/lib/python3.12/site-packages"
 Environment="TELEGRAM_API_ID=37956695"
 Environment="TELEGRAM_API_HASH=e99150bf9cf5fc5c6ad625a43bae93ed"
-ExecStart=/usr/bin/python3 /home/aka/telegram-forwarder-py/forwarder.py forward
+ExecStart=/home/aka/telegram-forwarder-py/venv/bin/python /home/aka/telegram-forwarder-py/forwarder.py forward
 Restart=on-failure
 RestartSec=10
 
-# Security - relax some for Python venv
-NoNewPrivileges=true
-PrivateTmp=true
-ProtectSystem=false
-ProtectHome=false
-ReadWritePaths=/home/aka/telegram-forwarder-py
-ReadWritePaths=/home/aka/.telegram-forwarder
+# Security - relaxed for user service
+# (Removed restrictions causing GROUP permission errors)
 
 # Logging
 StandardOutput=journal
