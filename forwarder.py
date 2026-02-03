@@ -245,12 +245,25 @@ async def main():
         code = input("> ").strip()
 
         try:
+            # Try to sign in with verification code
             await client.sign_in(phone, code)
-        except Exception as e:
-            if "2FA" in str(e):
-                print("\nEnter 2FA password:")
-                password = input("> ").strip()
+        except SessionPasswordNeededError:
+            # 2FA password required - prompt interactively
+            print("\n🔐 Two-factor authentication enabled")
+            print("Enter your 2FA password (hint: check your cloud password):")
+            password = input("> ").strip()
+
+            try:
                 await client.sign_in(password=password)
+            except Exception as e:
+                logger.error(f"❌ Failed to authenticate with 2FA password: {e}")
+                print(f"\n❌ Error: {e}")
+                print("Please check your 2FA password and try again.")
+                sys.exit(1)
+        except Exception as e:
+            logger.error(f"❌ Sign in failed: {e}")
+            print(f"\n❌ Error: {e}")
+            sys.exit(1)
 
         logger.warning("✅ Authentication successful")
 

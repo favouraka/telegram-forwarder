@@ -1,15 +1,31 @@
 #!/bin/bash
-# Simple watchdog for Telegram forwarder
+# Robust watchdog for Telegram forwarder
 # Checks every 2 minutes and restarts if needed
+
+set -o pipefail  # Catch errors in pipes
 
 FORWARDER_DIR="/home/aka/telegram-forwarder-py"
 LOG="$FORWARDER_DIR/watchdog.log"
 
-cd "$FORWARDER_DIR"
+echo "[$(date)] Watchdog starting (PID: $$)" >> "$LOG"
 
-# Load environment
+# Change directory safely
+cd "$FORWARDER_DIR" || {
+    echo "[$(date)] ERROR: Cannot cd to $FORWARDER_DIR" >> "$LOG"
+    exit 1
+}
+
+# Handle signals - don't die on SIGHUP, SIGINT, SIGTERM
+trap '' HUP INT TERM
+
+# Load environment safely
 if [ -f config.env ]; then
-    export $(grep -v '^#' config.env | xargs)
+    while IFS='=' read -r key value; do
+        # Skip comments and empty lines
+        [[ "$key" =~ ^#.*$ ]] && continue
+        [[ -z "$key" ]] && continue
+        export "$key=$value"
+    done < config.env
 fi
 
 while true; do
@@ -33,6 +49,11 @@ while true; do
         fi
     fi
     
-    # Sleep for 2 minutes
-    sleep 120
+    # Sleep for 2 minutes (handle interruption)
+    for ((i=0; i<120; i++)); do
+        sleep 1 || true  # Continue even if sleep is interrupted
+    done
 done
+
+# Should never reach here
+echo "[$(date)] Watchdog exited unexpectedly!" >> "$LOG"
